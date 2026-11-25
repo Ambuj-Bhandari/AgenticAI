@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Travel concierge prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..110,400..800&family=Source+Serif+4:wght@400;600&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  --page:#EDF0F4;--surface:#FFFFFF;--surface-2:#F3F5F8;--text:#1A2030;--muted:#566073;--rule:#D8DEE6;
+  --ink:#15223D;--ink-2:#1E3055;--on-ink:#EEF2F8;--on-ink-muted:#B7C2D6;
+  --teal:#0D716C;--on-teal:#FFFFFF;--teal-soft:#E0EFED;--gold:#A57F33;--gold-soft:#F5EDDB;
+  --red:#9C2F44;--red-soft:#F6E5E9;--frame:#101827;
+  --f-ui:'Archivo',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  --f-serif:'Source Serif 4',Georgia,'Times New Roman',serif;
+  --f-hi:'Noto Sans Devanagari','Nirmala UI',Mangal,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --page:#0C111C;--surface:#151C2B;--surface-2:#1B2436;--text:#E4E9F1;--muted:#9CA7B9;--rule:#2A3549;
+    --ink:#0D1730;--ink-2:#1A2A4E;--on-ink:#EEF2F8;--on-ink-muted:#A3B2CC;
+    --teal:#5EC4BC;--on-teal:#06201E;--teal-soft:#12302E;--gold:#D6B36C;--gold-soft:#372E1E;
+    --red:#E68B9D;--red-soft:#3A1D26;--frame:#05080F;
+  }
+}
+:root[data-theme="dark"]{
+  --page:#0C111C;--surface:#151C2B;--surface-2:#1B2436;--text:#E4E9F1;--muted:#9CA7B9;--rule:#2A3549;
+  --ink:#0D1730;--ink-2:#1A2A4E;--on-ink:#EEF2F8;--on-ink-muted:#A3B2CC;
+  --teal:#5EC4BC;--on-teal:#06201E;--teal-soft:#12302E;--gold:#D6B36C;--gold-soft:#372E1E;
+  --red:#E68B9D;--red-soft:#3A1D26;--frame:#05080F;
+}
+,::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);color:var(--text);font-family:var(--f-ui);font-size:16px;line-height:1.4;overflow-x:hidden}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0;text-align:inherit}
+button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.wrap{max-width:84rem;margin:0 auto;padding:1.5rem 1rem;display:grid;gap:1.25rem 1.75rem;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-areas:"intro" "stage" "rail" "bts"}
+.wrap>*{min-width:0}
+@media (min-width:1120px){
+  .wrap{grid-template-columns:19rem 24.5rem minmax(0,1fr);
+    grid-template-areas:"intro stage bts" "rail stage bts";align-items:start}
+}
+.intro{grid-area:intro}
+.stage{grid-area:stage;display:flex;justify-content:center}
+.rail{grid-area:rail}
+.bts{grid-area:bts}
+h1{font-family:var(--f-ui);font-stretch:78%;font-variation-settings:"wdth" 78;font-weight:780;font-size:2rem;line-height:1.08;margin:0 0 .6rem}
+.lede{font-family:var(--f-serif);color:var(--muted);margin:0;font-size:1.02rem}
+
+/* rail */
+.steps{list-style:none;margin:1rem 0;padding:0;display:flex;flex-direction:column;gap:.25rem}
+.steps button{display:flex;align-items:center;gap:.65rem;width:100%;padding:.5rem .6rem;border-radius:.7rem;border:1px solid transparent;font-weight:560}
+.steps .n{flex:none;width:1.65rem;height:1.65rem;border-radius:50%;border:1.5px solid var(--rule);display:grid;place-items:center;font-size:.8rem;font-weight:700;color:var(--muted)}
+.steps .done .n{border-color:var(--teal);color:var(--teal)}
+.steps .cur button{background:var(--surface);border-color:var(--rule)}
+.steps .cur .n{background:var(--teal);border-color:var(--teal);color:var(--on-teal)}
+@media (max-width:1119px){
+  .steps{flex-direction:row;overflow-x:auto;gap:.4rem;padding-bottom:.4rem;scroll-snap-type:x proximity}
+  .steps li{flex:none}
+  .steps button{white-space:nowrap;width:auto}
+}
+.say{background:var(--surface);border-left:3px solid var(--gold);border-radius:.3rem .7rem .7rem .3rem;padding:.75rem .9rem;margin-bottom:.8rem}
+.say h2{margin:0 0 .3rem;font-size:.78rem;font-weight:700;color:var(--gold)}
+.say p{margin:0;font-family:var(--f-serif)}
+.nav{display:flex;flex-wrap:wrap;gap:.5rem}
+.pill{border:1px solid var(--rule);background:var(--surface);border-radius:999px;padding:.5rem 1rem;font-weight:620}
+.pill.primary{background:var(--teal);color:var(--on-teal);border-color:var(--teal)}
+.note{font-size:.8rem;color:var(--muted);margin:.9rem 0 0}
+
+/* phone */
+.frame{background:var(--frame);border-radius:2.9rem;padding:.7rem;width:min(100%,24.5rem);height:48rem;max-height:calc(100vh - 3rem);min-height:40rem;box-shadow:0 24px 50px rgba(8,14,28,.28)}
+.screen{position:relative;height:100%;border-radius:2.3rem;background:var(--surface-2);display:flex;flex-direction:column;overflow:hidden}
+.status{background:var(--ink);color:var(--on-ink);display:flex;justify-content:space-between;align-items:center;padding:.65rem 1.5rem .3rem;font-size:.8rem;font-weight:650}
+.appbar{background:var(--ink);color:var(--on-ink);display:flex;align-items:center;gap:.6rem;padding:.4rem 1rem .8rem}
+.logo{width:2rem;height:2rem;border-radius:.55rem;background:var(--teal);color:var(--on-teal);display:grid;place-items:center;font-weight:800;font-size:.8rem}
+.appbar b{display:block;line-height:1.1}
+.appbar small{display:block;color:var(--on-ink-muted);font-size:.75rem}
+.body{flex:1;overflow-y:auto;padding:.9rem;display:flex;flex-direction:column;gap:.7rem;min-height:0}
+.body.enter>*{animation:rise .35s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(13,113,108,.5)}100%{box-shadow:0 0 0 1.4rem rgba(13,113,108,0)}}
+.inputbar{display:flex;align-items:center;gap:.6rem;padding:.6rem .8rem .9rem;background:var(--surface-2);border-top:1px solid var(--rule)}
+.mic{flex:none;width:2.5rem;height:2.5rem;border-radius:50%;background:var(--teal);color:var(--on-teal);display:grid;place-items:center}
+.field{flex:1;border:1px solid var(--rule);background:var(--surface);color:var(--muted);border-radius:999px;padding:.6rem 1rem;font-size:.9rem}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:1rem;padding:.9rem}
+.card h3{margin:0;font-size:1rem}
+.card .sub{margin:.15rem 0 .5rem;font-size:.82rem;color:var(--muted)}
+.row{display:flex;justify-content:space-between;gap:.8rem;padding:.5rem 0;border-top:1px solid var(--rule);font-size:.9rem}
+.row .l small{display:block;color:var(--muted);font-size:.76rem}
+.row .v{font-weight:650;white-space:nowrap}
+.row.total{font-weight:750}
+.msg{max-width:88%;padding:.65rem .8rem;border-radius:1rem;font-size:.9rem}
+.msg.agent{align-self:flex-start;background:var(--surface);border:1px solid var(--rule);border-bottom-left-radius:.3rem}
+.msg.cust{align-self:flex-end;background:var(--ink);color:var(--on-ink);border-bottom-right-radius:.3rem}
+.msg .hi{font-family:var(--f-hi);font-size:.95rem;margin:.35rem 0}
+.msg .tr{font-size:.76rem;color:var(--on-ink-muted)}
+.wave{display:flex;align-items:center;gap:2px;height:1.2rem}
+.wave i{display:block;width:3px;border-radius:2px;background:var(--on-ink-muted)}
+.disc{display:flex;gap:.5rem;align-items:flex-start;border:1px dashed var(--muted);border-radius:.8rem;padding:.55rem .7rem;font-size:.82rem;color:var(--text)}
+.disc svg{flex:none;color:var(--teal)}
+.btn{display:block;width:100%;text-align:center;border-radius:.8rem;padding:.75rem 1rem;font-weight:680;border:1.5px solid var(--teal);background:var(--teal);color:var(--on-teal)}
+.btn.out{background:transparent;color:var(--teal)}
+.btn.ink{background:var(--ink);border-color:var(--ink);color:var(--on-ink)}
+.btn.sm{width:auto;padding:.5rem .9rem;font-size:.85rem}
+.btns{display:flex;gap:.5rem;flex-wrap:wrap}
+.btns .btn{flex:1;min-width:6rem}
+.benefit{display:flex;gap:.6rem;align-items:flex-start;background:var(--gold-soft);color:var(--text);border-radius:.9rem;padding:.75rem .85rem;font-size:.88rem}
+.benefit svg{flex:none;color:var(--gold)}
+.seg{display:flex;background:var(--surface-2);border:1px solid var(--rule);border-radius:.7rem;padding:.2rem;margin:.5rem 0}
+.seg button{flex:1;text-align:center;padding:.45rem;border-radius:.5rem;font-size:.85rem;font-weight:620;color:var(--muted)}
+.seg button[aria-checked="true"]{background:var(--teal);color:var(--on-teal)}
+.tcs{font-size:.86rem;margin:0}
+.dim{position:absolute;inset:0;background:rgba(8,14,28,.55);z-index:5}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-radius:1.5rem 1.5rem 0 0;padding:.6rem 1.1rem 1.4rem;animation:slideup .28s ease both;display:flex;flex-direction:column;gap:.7rem}
+.grab{width:2.6rem;height:.28rem;border-radius:9px;background:var(--rule);margin:0 auto .2rem}
+.sheet h3{margin:0;font-size:1.1rem}
+.sheet p{margin:0;font-size:.9rem;color:var(--muted)}
+.kv{background:var(--surface-2);border-radius:.8rem;padding:.3rem .8rem}
+.kv div{display:flex;justify-content:space-between;gap:1rem;padding:.4rem 0;font-size:.85rem}
+.kv div+div{border-top:1px solid var(--rule)}
+.kv span:first-child{color:var(--muted)}
+.kv span:last-child{font-weight:650;text-align:right}
+.gauge{display:flex;gap:.9rem;align-items:center}
+.gauge .t{font-size:.9rem}
+.sw{display:flex;gap:.8rem;align-items:center;justify-content:space-between;width:100%}
+.sw .tx{font-size:.85rem;color:var(--muted)}
+.sw .tx b{display:block;color:var(--text);font-size:1rem}
+.track{flex:none;width:2.6rem;height:1.5rem;border-radius:999px;background:var(--rule);position:relative;transition:background .2s}
+.track::after{content:"";position:absolute;top:.2rem;left:.2rem;width:1.1rem;height:1.1rem;border-radius:50%;background:#fff;transition:transform .2s}
+[aria-checked="true"] .track{background:var(--teal)}
+[aria-checked="true"] .track::after{transform:translateX(1.1rem)}
+.fpbtn{align-self:center;width:5.2rem;height:5.2rem;border-radius:50%;border:2.5px solid var(--teal);color:var(--teal);display:grid;place-items:center;transition:background .2s,color .2s}
+.fpbtn.pulse{animation:pulse .65s ease-out}
+.fpbtn.done{background:var(--teal);color:var(--on-teal)}
+.cap{text-align:center;font-size:.85rem;color:var(--muted)}
+.steplab{font-size:.78rem;font-weight:700;color:var(--teal)}
+.center{display:flex;flex-direction:column;align-items:center;text-align:center;gap:.6rem;padding:1rem 0}
+.center h2{margin:0}
+.center p{margin:0;color:var(--muted);font-size:.9rem}
+.bigcheck{width:4.2rem;height:4.2rem;border-radius:50%;background:var(--teal);color:var(--on-teal);display:grid;place-items:center}
+.inkcard{background:var(--ink);color:var(--on-ink);border-radius:1rem;padding:1rem}
+.inkcard .big{font-size:1.6rem;font-weight:780;font-stretch:80%;font-variation-settings:"wdth" 80;line-height:1.1}
+.inkcard small{color:var(--on-ink-muted)}
+.chk{display:flex;gap:.7rem;align-items:flex-start;padding:.55rem 0;border-top:1px solid var(--rule);font-size:.9rem}
+.chk .ic{flex:none;width:1.5rem;height:1.5rem;border-radius:50%;display:grid;place-items:center;margin-top:.1rem}
+.ic.done{background:var(--teal);color:var(--on-teal)}
+.ic.prog{background:var(--gold-soft);color:var(--gold)}
+.ic.todo{border:1.5px dashed var(--muted)}
+.chk .l{flex:1}.chk .l small{display:block;color:var(--muted);font-size:.76rem}
+.link{color:var(--teal);font-weight:700;font-size:.85rem}
+.alert{background:var(--red-soft);color:var(--red);border-radius:.9rem;padding:.7rem .85rem;font-size:.88rem}
+.lock{position:absolute;inset:0;z-index:8;background:linear-gradient(180deg,#1b2a4d,#0d1526);color:#fff;display:flex;flex-direction:column;align-items:center;padding:4rem 1.2rem 1rem;gap:.3rem}
+.lock .clock{font-size:4.6rem;font-weight:300;font-stretch:80%;font-variation-settings:"wdth" 80;line-height:1}
+.lock .date{opacity:.85;margin-bottom:2rem}
+.notif{width:100%;background:rgba(255,255,255,.92);color:#1A2030;border-radius:1.1rem;padding:.8rem;display:flex;gap:.7rem;text-align:left;animation:slideup .5s .2s ease both}
+.notif .logo{flex:none}
+.notif .hd{display:flex;justify-content:space-between;font-size:.82rem}
+.notif p{margin:.2rem 0 0;font-size:.88rem}
+
+/* boarding pass */
+.pass{position:relative;background:var(--surface);border:1px solid var(--rule);border-radius:1rem}
+.pass .top{padding:.9rem .9rem .8rem;position:relative}
+.pass .route{display:flex;align-items:center;gap:.6rem;font-size:1.9rem;font-weight:780;font-stretch:78%;font-variation-settings:"wdth" 78;line-height:1}
+.pass .route svg{color:var(--teal)}
+.pass .meta{font-size:.8rem;color:var(--muted);margin-top:.35rem}
+.pass .best{position:absolute;top:.7rem;right:.7rem;background:var(--gold-soft);color:var(--gold);font-size:.72rem;font-weight:700;padding:.15rem .55rem;border-radius:999px}
+.pass .perf{position:relative;border-top:2px dashed var(--rule);margin:0 .9rem}
+.pass .perf::before,.pass .perf::after{content:"";position:absolute;top:-.6rem;width:1.2rem;height:1.2rem;border-radius:50%;background:var(--surface-2)}
+.pass .perf::before{left:calc(-.9rem - .6rem)}
+.pass .perf::after{right:calc(-.9rem - .6rem)}
+.pass .bot{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.8rem .9rem}
+.pass .price{font-size:1.35rem;font-weight:750}
+.pass .price small{display:block;font-size:.72rem;font-weight:400;color:var(--muted)}
+
+/* behind the scenes */
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:1rem;padding:1.1rem}
+.panel .hd{display:flex;justify-content:space-between;align-items:center;gap:1rem}
+.panel h2{margin:0;font-size:1.15rem}
+.panel .intro2{color:var(--muted);margin:.5rem 0 0;font-size:.92rem}
+.layer{margin:.8rem 0 .4rem;font-size:.82rem;font-weight:700;color:var(--muted)}
+.bl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.55rem}
+.bl li{display:grid;grid-template-columns:5.6rem minmax(0,1fr);gap:.7rem;align-items:start;font-size:.92rem}
+.chip{display:inline-block;text-align:center;font-size:.72rem;font-weight:700;padding:.15rem .5rem;border-radius:999px}
+.chip.Agent{background:var(--teal-soft);color:var(--teal)}
+.chip.Guardrail{background:var(--red-soft);color:var(--red)}
+.chip.Consent{background:var(--gold-soft);color:var(--gold)}
+.chip.Economics{background:var(--surface-2);border:1px solid var(--rule)}
+.chip.KPI{background:var(--text);color:var(--surface)}
+.eco{margin-top:1.1rem;background:var(--surface-2);border:1px solid var(--rule);border-radius:.9rem;padding:.9rem}
+.eco h3{margin:0 0 .3rem;font-size:1rem}
+.eco .rates{font-size:.8rem;color:var(--muted);margin:0 0 .5rem}
+.eco .r{display:flex;justify-content:space-between;gap:1rem;padding:.3rem 0;font-size:.9rem;border-top:1px solid var(--rule)}
+.eco .r.c{font-weight:750}
+.eco .per{font-size:.82rem;color:var(--muted);margin:.5rem 0 0}
+
+@media (prefers-reduced-motion:reduce){
+  ,::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="intro">
+    <h1>Travel concierge: the customer’s journey</h1>
+    <p class="lede">A Pune family plans a week in Japan, from the first question to the trip home. Tap through on the phone, or use the steps.</p>
+  </header>
+  <section class="rail" aria-label="Journey steps">
+    <ol class="steps" id="steps"></ol>
+    <div class="say" aria-live="polite"><h2>What to say</h2><p id="say"></p></div>
+    <div class="nav">
+      <button class="pill" id="back" type="button">Back</button>
+      <button class="pill primary" id="next" type="button">Next step</button>
+      <button class="pill" id="restart" type="button">Restart</button>
+    </div>
+    <p class="note">Prototype with illustrative data. Prices, flights and partners are not real; economics use the rates from the deck’s financial model.</p>
+  </section>
+  <main class="stage">
+    <div class="frame"><div class="screen" id="screen"></div></div>
+  </main>
+  <aside class="bts"><div class="panel" id="bts"></div></aside>
+</div>
+
+<script>
+(function(){
+"use strict";
+var R=function(n){return (n<0?"\u2212":"")+"\u20B9"+Math.abs(n).toLocaleString("en-IN");};
+var I={
+ mic:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+ plane:'<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 15.5v-2L13.5 9V4.5a1.5 1.5 0 0 0-3 0V9L3 13.5v2l7.5-2.2V18l-2 1.5V21l3.5-1 3.5 1v-1.5l-2-1.5v-4.7z"/></svg>',
+ star:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg>',
+ check:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+ checkBig:'<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+ clock:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
+ fp:'<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0v2M4 12.5C4 8 7.5 4 12 4M9 21c0-3 .5-5 .5-7.5a2.5 2.5 0 0 1 5 0c0 3-.5 5.500-1 8M6 15c0-2 0-3 0-4M18 14c0 2-.3 4-1 6M12 11.500c0 3-.3 5.500-1 8"/></svg>',
+ shield:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5.500c0 4.500-3 8-7 9.500-4-1.500-7-5-7-9.500V6z"/><path d="M9 12l2.200 2.200L15.500 10" stroke-linecap="round"/></svg>',
+ sb:'<svg width="52" height="12" viewBox="0 0 52 12" fill="currentColor" aria-hidden="true"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.500" width="3" height="6.500" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/><rect x="24" y="1" width="22" height="10" rx="3" fill="none" stroke="currentColor" stroke-width="1.200"/><rect x="26" y="3" width="15" height="6" rx="1.500"/><rect x="47.500" y="4" width="2" height="4" rx="1"/></svg>'
+};
+
+var ECO_RATES="Model rates from the deck: 30% of partner commission, 1% card fees, 26% insurance commission, 1% rewards. Forex markup waived, so \u20B90 from forex.";
+
+var STEPS=[
+{id:"ask",name:"Ask in your own words",
+ say:"Customers ask in their own words and language. The agent comes back with real options inside the budget, priced all-in.",
+ layer:"Layer 1: Plan",
+ bts:[["Agent","Understands the Hindi voice request: four travellers, one week, December, \u20B94 lakh budget."],
+      ["Agent","Searches partner inventory for flights and stays, and builds two trips within budget."],
+      ["Guardrail","Tells the customer they are talking to an AI and that a person is available."],
+      ["Guardrail","Quotes prices only from live partner sources, never from memory."]]},
+{id:"cost",name:"See the full cost",
+ say:"Every rupee is visible before booking: flights, stays, spending money, cover, forex and tax.",
+ layer:"Layers 1 and 5: Plan and Money",
+ bts:[["Agent","Adds up the full cost, including estimated spending in Japan."],
+      ["Agent","Shows how tax collected at source differs between a tour package and separate bookings."],
+      ["Economics","Picks this trip\u2019s benefit: forex markup waived, funded from the reward budget."],
+      ["Guardrail","Shows travel cover as optional; nothing is pre-added."]]},
+{id:"budget",name:"Check the budget",
+ say:"Consent is specific and time-bound. Using data to offer credit needs a second, separate consent.",
+ layer:"Layer 5: Money, with data and consent",
+ bts:[["Consent","Account Aggregator consent for budgeting only (purpose code 102), for 30 days, revocable."],
+      ["Agent","Checks the trip against balances across banks and the family\u2019s savings goal."],
+      ["Guardrail","An EMI offer needs its own consent: budgeting data can\u2019t be used to offer credit (Sahamati fair-use rules)."]]},
+{id:"pay",name:"Book and pay",
+ say:"The agent prepares everything; the customer confirms each payment with a fingerprint. Cover is strictly opt-in.",
+ layer:"Layers 3 and 4: Book and Pay",
+ bts:[["Guardrail","Each payment needs the customer\u2019s biometric confirmation, as RBI\u2019s two-factor rule requires."],
+      ["Guardrail","Cover is added only after the customer switches it on; no pre-ticked products (RBI conduct rules)."],
+      ["Agent","Books through registered partners only, and logs every action with its consent receipt."],
+      ["KPI","Proposal accepted and insurance opt-in both recorded for the weekly review."]]},
+{id:"prep",name:"Get ready to go",
+ say:"Before the trip, the agent clears the paperwork and gets the card ready, so nothing is left to the last minute.",
+ layer:"Layer 2: Documents",
+ bts:[["Agent","Checks passport validity for all four travellers."],
+      ["Agent","Books visa appointments through a registered partner and prompts DigiYatra for the departure."],
+      ["Agent","Sets the card up for Japan with the forex markup waived."],
+      ["Guardrail","Hands any document doubt to a person rather than guessing."]]},
+{id:"disruption",name:"A flight is cancelled",
+ say:"When a flight is cancelled, the customer gets a new plan, not a problem. One tap, no queue.",
+ layer:"Layer 6: Recover",
+ bts:[["Agent","Spots the cancellation, holds four seats on the next flight and tells the hotel about the late arrival."],
+      ["Agent","Opens the delay claim on the travel cover automatically."],
+      ["Guardrail","No new payment, so no confirmation is needed; any fare difference would need the customer\u2019s fingerprint."],
+      ["Guardrail","Offers a person at every step."],
+      ["KPI","Recovery time logged: 6 minutes from alert to confirmed plan (illustrative)."]]},
+{id:"home",name:"After the trip",
+ say:"After the trip, the bank closes the loop: savings, claims, tax and the next trip, in one place.",
+ layer:"Layer 7: Reward, and Layer 8 reporting",
+ bts:[["Economics","Rewards credited and shown as progress towards the next trip."],
+      ["Agent","Reminds the family that TCS paid can be claimed when they file their tax return."],
+      ["KPI","Trip closed with zero payments without confirmation and zero data used outside consent."],
+      ["KPI","Results flow into the daily desk, weekly risk review and monthly steering report."]]}
+];
+
+var DEF={i:0,tax:"package",consent:null,emi:null,cover:false,payStep:0,paid:false,notif:false,accepted:false,sheet:null,btsHidden:false};
+var S=JSON.parse(JSON.stringify(DEF));
+var $=function(id){return document.getElementById(id);};
+
+function ecoState(){
+  if(S.i===0)return "none";
+  if(S.i<=2)return "potential";
+  if(S.i===3)return S.paid?"booked":"potential";
+  if(S.i<6)return "booked";
+  return "final";
+}
+function ecoHTML(){
+  var st=ecoState();
+  if(st==="none")return '<div class="eco"><h3>Bank economics</h3><p class="rates" style="margin:0">Nothing earned yet. The customer is still exploring.</p></div>';
+  var head={potential:"Potential bank earnings on this trip",booked:"Bank earnings on this trip so far","final":"Bank earnings on this trip"}[st];
+  var showIns=(st==="potential")||S.cover;
+  var rows=[["Share of partner booking commission",10649],["Card fees on bookings",3040],["Card fees on spending abroad",600]];
+  if(showIns)rows.push([st==="potential"?"Insurance commission (if cover is added)":"Insurance commission",1352]);
+  rows.push(["Rewards cost",-3692],["AI and servicing",-150]);
+  var sum=0,h='';
+  rows.forEach(function(r){sum+=r[1];h+='<div class="r"><span>'+r[0]+'</span><span>'+R(r[1])+'</span></div>';});
+  return '<div class="eco"><h3>'+head+'</h3><p class="rates">'+ECO_RATES+'</p>'+h+
+    '<div class="r c"><span>Contribution</span><span>'+R(sum)+'</span></div>'+
+    '<p class="per">About '+R(Math.round(sum/4))+' per traveller, close to the deck\u2019s \u20B92,934 for an average trip.</p></div>';
+}
+function renderBts(){
+  var el=$("bts"),st=STEPS[S.i];
+  if(S.btsHidden){
+    el.innerHTML='<div class="hd"><h2>Behind the scenes</h2><button class="pill" data-act="bts" type="button">Show</button></div><p class="intro2">Hidden, so the focus stays on the customer. Show it to walk through the controls and economics at each step.</p>';
+    return;
+  }
+  var li=st.bts.map(function(b){return '<li><span class="chip '+b[0]+'">'+b[0]+'</span><span>'+b[1]+'</span></li>';}).join("");
+  el.innerHTML='<div class="hd"><h2>Behind the scenes</h2><button class="pill" data-act="bts" type="button">Hide</button></div>'+
+   '<p class="intro2">What the agent, the guardrails and the bank are doing at this step.</p>'+
+   '<p class="layer">'+st.layer+'</p><ul class="bl">'+li+'</ul>'+ecoHTML();
+}
+function renderRail(){
+  $("steps").innerHTML=STEPS.map(function(s,k){
+    var c=k===S.i?"cur":(k<S.i?"done":"");
+    return '<li class="'+c+'"><button type="button" data-act="goto" data-step="'+k+'"'+(k===S.i?' aria-current="step"':'')+'><span class="n">'+(k+1)+'</span><span>'+s.name+'</span></button></li>';
+  }).join("");
+  $("say").textContent=STEPS[S.i].say;
+  $("back").disabled=S.i===0;$("next").disabled=S.i===STEPS.length-1;
+  var cur=$("steps").querySelector(".cur");
+  if(cur&&window.matchMedia("(max-width:1119px)").matches){
+    var ol=$("steps");ol.scrollLeft=cur.offsetLeft-ol.offsetLeft-12;
+  }
+}
+
+/* phone screens */
+function wave(){var h=[.4,.7,1,.6,.9,.5,.8,1,.55,.75,.45,.65];return '<span class="wave" aria-hidden="true">'+h.map(function(x){return '<i style="height:'+Math.round(x*100)+'%"></i>';}).join("")+'</span>';}
+function pass(o){
+  return '<div class="pass"><div class="top">'+(o.best?'<span class="best">Best fit</span>':'')+
+   '<div class="route"><span>BOM</span>'+I.plane.replace('<svg ','<svg style="transform:rotate(90deg)" ')+'<span>'+o.to+'</span></div>'+
+   '<div class="meta">'+o.meta+'</div></div><div class="perf"></div>'+
+   '<div class="bot"><div class="price">'+R(o.price)+'<small>all-in estimate</small></div>'+
+   '<button type="button" class="btn sm'+(o.best?'':' out')+'" data-act="goto" data-step="1">'+o.btn+'</button></div></div>';
+}
+function row(l,n,v){return '<div class="row"><div class="l">'+l+(n?'<small>'+n+'</small>':'')+'</div><div class="v">'+v+'</div></div>';}
+function sheet(inner){return '<div class="dim"></div><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>'+inner+'</div>';}
+
+function screenAsk(){
+  return {sub:"Your Bank app",chat:true,html:
+   '<div class="disc">'+I.shield+'<span><b>You\u2019re talking to an AI assistant.</b> Ask for a person any time.</span></div>'+
+   '<div class="msg cust">'+wave()+'<div class="hi" lang="hi">\u0926\u093f\u0938\u0902\u092c\u0930 \u092e\u0947\u0902 \u0939\u092e \u091a\u093e\u0930 \u0932\u094b\u0917\u094b\u0902 \u0915\u0947 \u0932\u093f\u090f \u090f\u0915 \u0939\u092b\u094d\u0924\u0947 \u0915\u0940 \u091c\u093e\u092a\u093e\u0928 \u091f\u094d\u0930\u093f\u092a \u092a\u094d\u0932\u093e\u0928 \u0915\u0930\u094b, \u092c\u091c\u091f \u091a\u093e\u0930 \u0932\u093e\u0916 \u0924\u0915\u0964</div><div class="tr">\u201cPlan a one-week Japan trip for four of us in December, budget up to \u20B94 lakh.\u201d</div></div>'+
+   '<div class="msg agent">Here are two trips that fit your \u20B94 lakh budget. Prices include flights, stays, spending money, cover and tax.</div>'+
+   pass({best:true,to:"TYO",meta:"Tokyo and Kyoto, 18-25 Dec, 7 nights, 4 travellers",price:369200,btn:"See full cost"})+
+   pass({to:"OSA",meta:"Osaka and Tokyo, 18-25 Dec, 7 nights, 4 travellers",price:352600,btn:"Compare"})};
+}
+function screenCost(){
+  return {sub:"Tokyo and Kyoto, 18-25 Dec",html:
+   '<div class="card"><h3>Full cost for 4 travellers</h3><p class="sub">Every cost before you book.</p>'+
+   row("Flights","Mumbai to Tokyo, return, 1 stop",R(168000))+
+   row("Stays and activities","7 nights in 2 hotels, rail pass",R(136000))+
+   row("Spending in Japan","Estimate, paid by card",R(60000))+
+   row("Family travel cover","Optional, you decide at booking",R(5200))+
+   row("Forex markup on your card","Usually 3.5%",R(0))+
+   '<div class="row total"><div class="l">All-in estimate</div><div class="v">'+R(369200)+'</div></div></div>'+
+   '<div class="benefit">'+I.star+'<span><b>Your benefit for this trip:</b> no forex markup on card spending in Japan. That saves about '+R(2100)+'.</span></div>'+
+   '<div class="card"><h3>Tax collected at source (TCS)</h3>'+
+   '<div class="seg" role="radiogroup" aria-label="TCS option">'+
+   '<button type="button" role="radio" aria-checked="'+(S.tax==="package")+'" data-act="tax" data-v="package">As a tour package</button>'+
+   '<button type="button" role="radio" aria-checked="'+(S.tax==="separate")+'" data-act="tax" data-v="separate">Book separately</button></div>'+
+   '<p class="tcs">'+(S.tax==="package"?'2% TCS collected now: <b>'+R(6080)+'</b>. You can claim it back when you file your tax return.':'TCS depends on how each part is paid. I\u2019ll show it line by line before each payment.')+'</p></div>'+
+   '<button type="button" class="btn" data-act="goto" data-step="2">Check it fits my budget</button>'};
+}
+function screenBudget(){
+  var h='<div class="msg agent">Before you book, I can check this trip against your budget.</div>';
+  var sh='';
+  if(S.consent===null){
+    sh=sheet('<h3>Use balances from your other banks to check your budget?</h3><p>Shared through an Account Aggregator. You can stop sharing at any time.</p>'+
+     '<div class="kv"><div><span>Purpose</span><span>Budgeting and insights only</span></div><div><span>Data</span><span>Balances and 6 months of transactions</span></div><div><span>From</span><span>2 linked accounts</span></div><div><span>For</span><span>30 days</span></div></div>'+
+     '<div class="btns"><button type="button" class="btn out" data-act="consent" data-v="no">Not now</button><button type="button" class="btn" data-act="consent" data-v="yes">Allow for 30 days</button></div>');
+  }else if(S.consent==="yes"){
+    h+='<div class="card gauge"><svg width="68" height="68" viewBox="0 0 68 68" aria-hidden="true"><circle cx="34" cy="34" r="27" fill="none" stroke="var(--rule)" stroke-width="7"/><circle cx="34" cy="34" r="27" fill="none" stroke="var(--teal)" stroke-width="7" stroke-linecap="round" stroke-dasharray="78 170" transform="rotate(-90 34 34)"/><text x="34" y="39" text-anchor="middle" font-size="15" font-weight="700" fill="currentColor">46%</text></svg><div class="t"><b>This trip fits.</b> It uses 46% of the savings you have set aside, and your monthly savings goal stays on track.</div></div>';
+  }else{
+    h+='<div class="msg agent">No problem. I\u2019ll use only your accounts with us. You can still book.</div>';
+  }
+  if(S.consent!==null){
+    h+='<div class="msg agent">Would you like to spread the flight cost over a few months? I\u2019d need a separate consent to check that.</div>';
+    if(S.emi===null){
+      h+='<div class="btns"><button type="button" class="btn out" data-act="emiopen">Show EMI options</button><button type="button" class="btn" data-act="emi" data-v="skip">No, pay in full</button></div>';
+    }else if(S.emi==="yes"){
+      h+='<div class="msg agent">Three EMI plans are available. I\u2019ll show the full cost of each before you choose. For this demo, let\u2019s continue.</div><button type="button" class="btn" data-act="goto" data-step="3">Continue to booking</button>';
+    }else{
+      h+='<div class="msg agent">Understood, pay in full. Let\u2019s book.</div><button type="button" class="btn" data-act="goto" data-step="3">Continue to booking</button>';
+    }
+  }
+  if(S.sheet==="emi"){
+    sh=sheet('<h3>Check EMI options for the flights?</h3><p>This is a separate consent. It lets us use your financial data to check credit offers, which your budgeting consent does not allow.</p>'+
+     '<div class="kv"><div><span>Purpose</span><span>Credit offers only</span></div><div><span>For</span><span>This booking</span></div></div>'+
+     '<div class="btns"><button type="button" class="btn out" data-act="emi" data-v="no">No thanks</button><button type="button" class="btn" data-act="emi" data-v="yes">Allow</button></div>');
+  }
+  return {sub:"Budget check",chat:true,html:h,sheet:sh};
+}
+function payList(){
+  var a=[{amt:168000,h:"flights",to:"to the airline, through our travel partner"},{amt:136000,h:"stays and activities",to:"to the hotels, through our travel partner"}];
+  if(S.cover)a.push({amt:5200,h:"family travel cover",to:"to the insurer"});
+  return a;
+}
+function screenPay(){
+  if(S.paid){
+    return {sub:"Booked",html:'<div class="center"><div class="bigcheck">'+I.checkBig+'</div><h2>You\u2019re booked</h2><p>4 return flights, 2 hotels and a rail pass'+(S.cover?', and family cover is active':'')+'.</p><p>Each payment was confirmed with your fingerprint.</p></div><button type="button" class="btn" data-act="goto" data-step="4">Go to my trip</button>'};
+  }
+  var h='<div class="card"><h3>Tokyo and Kyoto, 18-25 Dec</h3><p class="sub">You\u2019ll confirm each payment separately.</p>'+
+    row("Flights","",R(168000))+row("Stays and activities","",R(136000))+'</div>'+
+    '<button type="button" role="switch" aria-checked="'+S.cover+'" class="card" data-act="cover"><span class="sw"><span class="tx"><b>Add family travel cover, '+R(5200)+'</b>Medical up to $250,000, cancellation, delay and baggage, for all 4. Optional.</span><span class="track"></span></span></button>'+
+    '<button type="button" class="btn" data-act="paystart">Pay and book</button>';
+  var sh='';
+  if(S.sheet==="fp"){
+    var L=payList(),p=L[S.payStep];
+    sh=sheet('<span class="steplab">Payment '+(S.payStep+1)+' of '+L.length+'</span><h3>Confirm '+R(p.amt)+' for '+p.h+'</h3>'+
+      '<p>Paid by your Travel card ending 4021, '+p.to+'.</p>'+
+      '<button type="button" class="fpbtn" id="fpb" data-act="fp" aria-label="Confirm with fingerprint">'+I.fp+'</button><div class="cap" id="fpcap">Touch to confirm with your fingerprint</div>');
+  }
+  return {sub:"Review and pay",html:h,sheet:sh};
+}
+function screenPrep(){
+  function item(state,l,n,extra){
+    var ic=state==="done"?I.check:(state==="prog"?I.clock:"");
+    return '<div class="chk"><span class="ic '+state+'">'+ic+'</span><div class="l">'+l+'<small>'+n+'</small></div>'+(extra||"")+'</div>';
+  }
+  var cov=S.cover?item("done","Travel cover","Active for all 4 travellers"):item("todo","Travel cover","Not added; you can still add it",'<button type="button" class="link" data-act="addcover">Add</button>');
+  return {sub:"My trip",html:
+   '<div class="inkcard"><div class="big">Leaving in 18 days</div><small>Mumbai to Tokyo, 18 Dec, 4 travellers</small></div>'+
+   '<div class="card"><h3>Before you go</h3>'+
+   item("done","Passports","All 4 valid for the whole trip")+
+   item("prog","Visas","Appointments booked with our visa partner, 2 Dec")+
+   item("todo","DigiYatra","Add this trip for faster entry at Mumbai airport",'<button type="button" class="link">Add</button>')+
+   item("done","Card set for Japan","Forex markup waived for this trip")+cov+'</div>'+
+   '<button type="button" class="btn ink" data-act="goto" data-step="5">Skip ahead to 21 December</button>'};
+}
+function screenDisruption(){
+  if(!S.notif){
+    return {sub:"Trip update",lock:'<div class="lock"><div class="clock">06:12</div><div class="date">Monday 21 December</div>'+
+     '<button type="button" class="notif" data-act="notif"><span class="logo">YB</span><span><span class="hd"><b>Travel concierge</b><span>now</span></span><p>Your flight XY 512 to Tokyo is cancelled. I\u2019ve found a new plan; tap to review.</p></span></button></div>',html:""};
+  }
+  if(S.accepted){
+    return {sub:"Trip update",time:"06:14",html:'<div class="center"><div class="bigcheck">'+I.checkBig+'</div><h2>New plan confirmed</h2><p>New boarding passes are in your trip. The hotel knows you\u2019ll arrive late, and your delay claim is in progress.</p></div><button type="button" class="btn" data-act="goto" data-step="6">Fast-forward to the trip home</button>'};
+  }
+  return {sub:"Trip update",time:"06:13",html:
+   '<div class="alert"><b>Cancelled:</b> XY 512, Hong Kong to Tokyo, 21 Dec, 14:10</div>'+
+   '<div class="card"><h3>Your new plan</h3><p class="sub">No extra cost. Seats held until 13:00.</p>'+
+   row("Flight XY 518","Departs 18:25, 4 seats together",R(0))+
+   row("Hotel in Tokyo","Told you\u2019ll arrive late; first night kept","Done")+
+   row("Delay claim","Opened on your travel cover, ref TRV-20481","Started")+'</div>'+
+   '<button type="button" class="btn" data-act="accept">Accept new plan</button>'+
+   '<div class="btns"><button type="button" class="btn out">See other flights</button><button type="button" class="btn out">Talk to a person</button></div>'};
+}
+function screenHome(){
+  var tcs=S.tax==="package"?row("TCS paid","We\u2019ll remind you to claim it when you file your return",R(6080)):row("TCS","Shown at each payment; we\u2019ll remind you to claim any TCS when you file","Tracked");
+  return {sub:"Trip summary",html:
+   '<div class="inkcard"><div class="big">Welcome home</div><small>Tokyo and Kyoto, 18-25 Dec</small></div>'+
+   '<div class="card"><h3>Your trip in numbers</h3>'+
+   row("Total spent","Against a plan of "+R(369200),R(371850))+
+   row("Saved on forex","No markup on card spending in Japan",R(2100))+
+   row("Delay claim","Paid to your account",R(4500))+tcs+'</div>'+
+   '<div class="benefit">'+I.star+'<span><b>18,460 points earned</b>, worth about '+R(3692)+'. They\u2019re already counting towards your next trip.</span></div>'+
+   '<button type="button" class="btn" data-act="restart">Plan the next trip</button>'};
+}
+var BUILD=[screenAsk,screenCost,screenBudget,screenPay,screenPrep,screenDisruption,screenHome];
+
+function renderPhone(animate){
+  var d=BUILD[S.i]();
+  var time=d.time||"9:41";
+  var h='<div class="status"><span>'+time+'</span>'+I.sb+'</div>'+
+   '<div class="appbar"><span class="logo">YB</span><span><b>Travel concierge</b><small>'+d.sub+'</small></span></div>'+
+   '<div class="body'+(animate?' enter':'')+'" id="pbody">'+d.html+'</div>'+
+   (d.chat?'<div class="inputbar"><span class="mic">'+I.mic+'</span><span class="field">Ask in any language</span></div>':'')+
+   (d.sheet||"")+(d.lock||"");
+  $("screen").innerHTML=h;
+}
+function render(animate){
+  renderRail();renderPhone(animate);renderBts();
+}
+
+function goTo(i,jump){
+  i=Math.max(0,Math.min(STEPS.length-1,i));
+  S.i=i;S.sheet=null;S.payStep=0;
+  if(i>=3){if(S.consent===null)S.consent="yes";if(S.emi===null)S.emi="no";}
+  if(i>3&&!S.paid){S.paid=true;S.cover=true;}
+  if(i>=6){S.notif=true;S.accepted=true;}
+  if(i<5){S.notif=false;S.accepted=false;}
+  if(i<3){S.paid=false;}
+  try{history.replaceState(null,"","#"+STEPS[i].id);}catch(e){}
+  render(true);
+  var b=$("pbody");if(b)b.scrollTop=0;
+}
+function restart(){
+  var bh=S.btsHidden;S=JSON.parse(JSON.stringify(DEF));S.btsHidden=bh;goTo(0);
+}
+
+document.addEventListener("click",function(e){
+  var t=e.target.closest("[data-act]");
+  if(t){
+    var a=t.getAttribute("data-act");
+    switch(a){
+      case "goto":goTo(parseInt(t.getAttribute("data-step"),10));return;
+      case "tax":S.tax=t.getAttribute("data-v");render(false);return;
+      case "consent":S.consent=t.getAttribute("data-v");render(false);return;
+      case "emiopen":S.sheet="emi";render(false);return;
+      case "emi":
+        var v=t.getAttribute("data-v");
+        if(v==="skip"){goTo(3);return;}
+        S.emi=v;S.sheet=null;render(false);return;
+      case "cover":S.cover=!S.cover;render(false);return;
+      case "addcover":S.cover=true;render(false);return;
+      case "paystart":S.sheet="fp";S.payStep=0;render(false);return;
+      case "fp":
+        if(t.classList.contains("pulse")||t.classList.contains("done"))return;
+        t.classList.add("pulse");
+        setTimeout(function(){
+          t.classList.remove("pulse");t.classList.add("done");
+          var c=$("fpcap");if(c)c.textContent="Confirmed";
+          setTimeout(function(){
+            if(S.payStep<payList().length-1){S.payStep++;render(false);}
+            else{S.paid=true;S.sheet=null;render(true);}
+          },450);
+        },650);
+        return;
+      case "notif":S.notif=true;render(true);return;
+      case "accept":S.accepted=true;render(true);return;
+      case "restart":restart();return;
+      case "bts":S.btsHidden=!S.btsHidden;renderBts();return;
+    }
+  }
+});
+$("back").addEventListener("click",function(){goTo(S.i-1);});
+$("next").addEventListener("click",function(){goTo(S.i+1);});
+$("restart").addEventListener("click",restart);
+window.addEventListener("hashchange",function(){
+  var id=location.hash.replace("#","");
+  for(var k=0;k<STEPS.length;k++){if(STEPS[k].id===id&&k!==S.i){goTo(k);return;}}
+});
+var start=0,h0=location.hash.replace("#","");
+for(var k=0;k<STEPS.length;k++){if(STEPS[k].id===h0)start=k;}
+goTo(start);
+})();
+</script>
+</body>
+</html>
